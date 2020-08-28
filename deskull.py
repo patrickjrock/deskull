@@ -43,14 +43,17 @@ def connected_components(voxels):
 def biggest_component(ccs):
     ccs = ccs.flatten()
     ccs = ccs[ccs != 0] # remove 0s
+    m = stats.mode(ccs)
+    if len(m[0]) == 0: 
+        return 0
     return stats.mode(ccs)[0][0]
 
 def toss_small_components(voxels):
     # sets all voxels to zero that arent in the largest connected component
     ccs = connected_components(voxels)
     b = biggest_component(ccs)
-    for i in range(512):
-        for j in range(512):
+    for i in range(ccs.shape[0]):
+        for j in range(ccs.shape[1]):
             if ccs [i][j] != b:
                 voxels[i][j] = 0 
     return voxels
@@ -79,14 +82,33 @@ strip = nib.Nifti1Image(stripped_data, img.affine, img.header)
 nib.save(strip, 'strip.nii')
 
 
-for i in range(66):
-    vs = get_axial(stripped_data, i)
+fig = plt.figure()
+ims = [] 
+bs = []
+for i in range(stripped_data.shape[0]):
+    print("slice " + str(i))
+    vs = stripped_data[i] 
     cc = connected_components(vs)
     brain = toss_small_components(vs)
-    plt.imshow(brain, cmap='gray')
-    plt.show()
+    im = plt.imshow(brain, cmap='gray')
+    ims.append([im])
+    bs.append(brain) 
 
-#os.system('miview bones.nii')
+#ani = animation.ArtistAnimation(fig, ims, interval=20, blit=True,
+#                                repeat_delay=1000)
+
+#plt.show()
+
+
+f = nib.Nifti1Image(np.array(bs), img.affine, img.header)
+nib.save(f, 'final.nii')
+
+#for i in range(66):
+#    vs = get_axial(stripped_data, i)
+#    cc = connected_components(vs)
+#    brain = toss_small_components(vs)
+
+os.system('miview final.nii')
 
 
 
