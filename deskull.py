@@ -49,7 +49,11 @@ def toss_small_components(voxels):
     # sets all voxels to zero that arent in the largest connected component
     ccs = connected_components(voxels)
     b = biggest_component(ccs)
-    
+    for i in range(512):
+        for j in range(512):
+            if ccs [i][j] != b:
+                voxels[i][j] = 0 
+    return voxels
 
 def animate(data):
     fig = plt.figure()
@@ -75,9 +79,15 @@ strip = nib.Nifti1Image(stripped_data, img.affine, img.header)
 nib.save(strip, 'strip.nii')
 
 
+vs = get_axial(stripped_data, 30)
 cc = connected_components(get_axial(stripped_data,30))
-plt.imshow(cc, cmap='nipy_spectral')
+brain = toss_small_components(vs)
+
+plt.imshow(brain, cmap='gray')
 plt.show()
+
+brainib = nib.Nifti1Image(brain, img.affine, img.header)
+nib.save(brainib, 'brain.nii')
 
 #os.system('miview bones.nii')
 
