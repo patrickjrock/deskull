@@ -13,6 +13,8 @@ im = filters.gaussian(im, sigma= l / (4. * n))
 tmp = im
 blobs = im > 0.7 * im.mean()
 
+print(blobs)
+
 all_labels = measure.label(blobs)
 blobs_labels = measure.label(blobs, background=0)
 

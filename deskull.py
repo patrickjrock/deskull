@@ -8,6 +8,7 @@ import matplotlib.animation as animation
 import sys
 import os
 
+np.set_printoptions(threshold=sys.maxsize)
 
 def get_axial(voxels, n):
     # reformats matrix so first index pulls axials     
@@ -19,14 +20,14 @@ def get_axial(voxels, n):
 def strip_range(voxels, upper=75, lower=0):
     def f(x):
         if x<lower or x>upper:
-            return -1000
+            return 0
         else:
             return x
     return np.vectorize(f)(voxels)
 
 def connected_components(voxels):
-    blobs = 1*(voxels > 0) 
-    return measure.label(blobs)
+    blobs = voxels > 0
+    return measure.label(blobs, background = 0)
 
 def animate(data):
     fig = plt.figure()
@@ -34,7 +35,7 @@ def animate(data):
     for i in range(66):
         im = plt.imshow(get_axial(data, i), cmap='nipy_spectral', animated=True)
         ims.append([im])
-    ani = animation.ArtistAnimation(fig, ims, interval=80, blit=True,
+    ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
                                     repeat_delay=1000)
     plt.show()
 
@@ -47,11 +48,12 @@ else:
 
 img = nib.load('l1_Orig.nii')
 data = img.get_fdata()
-windowed_data = strip_range(data)
-bones = nib.Nifti1Image(windowed_data, img.affine, img.header)
-nib.save(bones, 'bones.nii')
+stripped_data = strip_range(data)
+strip = nib.Nifti1Image(stripped_data, img.affine, img.header)
+nib.save(strip, 'strip.nii')
 
-animate(connected_components(windowed_data))
+
+animate(connected_components(stripped_data))
 
 
 #os.system('miview bones.nii')
