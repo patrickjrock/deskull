@@ -8,6 +8,9 @@ import matplotlib.animation as animation
 import sys
 import os
 
+# consider connected componenets only in two dimensions
+# do multiple orthogonal passes and throw out the small components 
+
 np.set_printoptions(threshold=sys.maxsize)
 
 def get_axial(voxels, n):
@@ -26,8 +29,26 @@ def strip_range(voxels, upper=75, lower=0):
     return np.vectorize(f)(voxels)
 
 def connected_components(voxels):
-    blobs = voxels > 0
-    return measure.label(blobs, background = 0)
+    def f(x):
+        if x < 1: 
+            return 0
+        else:
+            return x
+    #voxels = filters.gaussian(voxels, sigma = 200) 
+    blobs = np.vectorize(f)(voxels)
+
+    # remove this
+    b = nib.Nifti1Image(blobs, img.affine, img.header)
+    nib.save(b, 'blobs.nii')
+
+    v = nib.Nifti1Image(voxels, img.affine, img.header)
+    nib.save(v, 'voxels.nii')
+
+
+    m = measure.label(blobs)
+    print(m)
+    return m
+
 
 def animate(data):
     fig = plt.figure()
