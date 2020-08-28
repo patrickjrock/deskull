@@ -1,2 +1,4 @@
 *.nii
 *__
+*.swp
+connected.py

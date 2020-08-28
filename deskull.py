@@ -79,15 +79,12 @@ strip = nib.Nifti1Image(stripped_data, img.affine, img.header)
 nib.save(strip, 'strip.nii')
 
 
-vs = get_axial(stripped_data, 30)
-cc = connected_components(get_axial(stripped_data,30))
-brain = toss_small_components(vs)
-
-plt.imshow(brain, cmap='gray')
-plt.show()
-
-brainib = nib.Nifti1Image(brain, img.affine, img.header)
-nib.save(brainib, 'brain.nii')
+for i in range(66):
+    vs = get_axial(stripped_data, i)
+    cc = connected_components(vs)
+    brain = toss_small_components(vs)
+    plt.imshow(brain, cmap='gray')
+    plt.show()
 
 #os.system('miview bones.nii')
 
