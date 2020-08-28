@@ -6,9 +6,15 @@ import matplotlib.animation as animation
 import sys
 import os
 
+def get_axial(voxels, n):
+    axial = [] 
+    for sl in voxels:
+       axial.append([x[n] for x in sl])
+    return axial
 
 if len(sys.argv) == 1:
     level = 200
+
 
 else:
     level = int(sys.argv[1])
@@ -22,11 +28,11 @@ all_labels = measure.label(windowed_data)
 
 fig = plt.figure()
 ims = []
-for i in range(512):
-    im = plt.imshow(all_labels[i], cmap='nipy_spectral', animated=True)
+for i in range(66):
+    im = plt.imshow(get_axial(all_labels, i), cmap='nipy_spectral', animated=True)
     ims.append([im])
 
-ani = animation.ArtistAnimation(fig, ims, interval=20, blit=True,
+ani = animation.ArtistAnimation(fig, ims, interval=80, blit=True,
                                 repeat_delay=1000)
 plt.show()
 
