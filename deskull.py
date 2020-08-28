@@ -83,32 +83,37 @@ nib.save(strip, 'strip.nii')
 
 
 fig = plt.figure()
-ims = [] 
 bs = []
 for i in range(stripped_data.shape[0]):
-    print("slice " + str(i))
+    print("saggital slice " + str(i))
     vs = stripped_data[i] 
     cc = connected_components(vs)
     brain = toss_small_components(vs)
+    bs.append(brain) 
+stripped_data = np.array(bs)
+
+bs = []
+ims = [] 
+for i in range(66):
+    print("axial slice " + str(i))
+    vs = get_axial(stripped_data, i)
+    cc = connected_components(vs)
+    brain = toss_small_components(vs)
+    bs.append(brain)
     im = plt.imshow(brain, cmap='gray')
     ims.append([im])
-    bs.append(brain) 
 
-#ani = animation.ArtistAnimation(fig, ims, interval=20, blit=True,
-#                                repeat_delay=1000)
+ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
+                                repeat_delay=1000)
 
-#plt.show()
+ani.save('fig1.gif', writer='imagemagick', fps=10)
+
+plt.show()
 
 
 f = nib.Nifti1Image(np.array(bs), img.affine, img.header)
 nib.save(f, 'final.nii')
 
-#for i in range(66):
-#    vs = get_axial(stripped_data, i)
-#    cc = connected_components(vs)
-#    brain = toss_small_components(vs)
-
-os.system('miview final.nii')
 
 
 
