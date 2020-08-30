@@ -1,3 +1,7 @@
+# Patrick Rock 8/30/2020
+# deskull.py
+# preprocessing step to remove extra-axial tissue
+
 import numpy as np
 from skimage import measure
 from skimage import filters 
@@ -8,21 +12,7 @@ import matplotlib.animation as animation
 import sys
 import os
 
-# consider connected componenets only in two dimensions
-# do multiple orthogonal passes and throw out the small components 
-
-# should voxels have a type? they can keep track of what cc they are in
-
-np.set_printoptions(threshold=sys.maxsize)
-
-def get_axial(voxels, n):
-    # reformats matrix so first index pulls axials     
-    axial = [] 
-    for vs in voxels:
-       axial.append([v[n] for v in vs])
-    return axial
-
-def strip_range(voxels, upper=75, lower=0):
+def filter_range(voxels, upper=75, lower=0):
     def f(v):
         if v<lower or v>upper:
             return 0
@@ -37,19 +27,17 @@ def connected_components(voxels):
         else:
             return 1
     blobs = np.vectorize(f)(voxels)
-    m = measure.label(blobs)
-    return m
+    return measure.label(blobs)
 
 def biggest_component(ccs):
     ccs = ccs.flatten()
-    ccs = ccs[ccs != 0] # remove 0s
-    m = stats.mode(ccs)
+    ccs = ccs[ccs != 0] 
+    m = stats.mode(ccs) 
     if len(m[0]) == 0: 
         return 0
     return stats.mode(ccs)[0][0]
 
 def toss_small_components(voxels):
-    # sets all voxels to zero that arent in the largest connected component
     ccs = connected_components(voxels)
     b = biggest_component(ccs)
     for i in range(ccs.shape[0]):
@@ -58,61 +46,28 @@ def toss_small_components(voxels):
                 voxels[i][j] = 0 
     return voxels
 
-def animate(data):
+def animate(data, iv=100):
     fig = plt.figure()
     ims = []
-    for i in range(66):
-        im = plt.imshow(get_axial(data, i), cmap='nipy_spectral', animated=True)
+    for i in range(data.shape[0]):
+        im = plt.imshow(data[i], cmap='gray', animated=True)
         ims.append([im])
-    ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
+    ani = animation.ArtistAnimation(fig, ims, interval=iv, blit=True,
                                     repeat_delay=1000)
     plt.show()
 
+def npmap(f, xs):
+    return np.array(list(map(f, xs)))
 
-if len(sys.argv) == 1:
-    level = 200
-else:
-    level = int(sys.argv[1])
-
-
-img = nib.load('l1_Orig.nii')
-data = img.get_fdata()
-stripped_data = strip_range(data)
-strip = nib.Nifti1Image(stripped_data, img.affine, img.header)
-nib.save(strip, 'strip.nii')
-
-
-fig = plt.figure()
-bs = []
-for i in range(stripped_data.shape[0]):
-    print("saggital slice " + str(i))
-    vs = stripped_data[i] 
-    cc = connected_components(vs)
-    brain = toss_small_components(vs)
-    bs.append(brain) 
-stripped_data = np.array(bs)
-
-bs = []
-ims = [] 
-for i in range(66):
-    print("axial slice " + str(i))
-    vs = get_axial(stripped_data, i)
-    cc = connected_components(vs)
-    brain = toss_small_components(vs)
-    bs.append(brain)
-    im = plt.imshow(brain, cmap='gray')
-    ims.append([im])
-
-ani = animation.ArtistAnimation(fig, ims, interval=100, blit=True,
-                                repeat_delay=1000)
-
-ani.save('fig1.gif', writer='imagemagick', fps=10)
-
-plt.show()
-
-
-f = nib.Nifti1Image(np.array(bs), img.affine, img.header)
-nib.save(f, 'final.nii')
+def deskull(nii_file):
+    img = nib.load(nii_file)
+    data = img.get_fdata()
+    data = filter_range(data) # filter out skull
+    data = npmap(toss_small_components, data) # saggital pass 
+    data = np.transpose(data, (2,0,1)) # change orientation 
+    data = npmap(toss_small_components, data) # axial pass 
+    data = np.transpose(data, (1,2,0)) # restore original orientation
+    return nib.Nifti1Image(data, img.affine, img.header)
 
 
 
