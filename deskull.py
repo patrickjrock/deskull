@@ -59,8 +59,8 @@ def animate(data, iv=100):
 def npmap(f, xs):
     return np.array(list(map(f, xs)))
 
-def deskull(nii_file):
-    img = nib.load(nii_file)
+def deskull(img):
+    # takes an nib image and removes extra-axial tissue 
     data = img.get_fdata()
     data = filter_range(data) # filter out skull
     data = npmap(toss_small_components, data) # saggital pass 
