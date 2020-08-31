@@ -57,6 +57,7 @@ def animate(data, iv=100):
     plt.show()
 
 def npmap(f, xs):
+    # maps over an np array and casts back 
     return np.array(list(map(f, xs)))
 
 def deskull(img):
